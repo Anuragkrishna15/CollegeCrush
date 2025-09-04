@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CollegeCrush - Supabase Storage Setup</title>
+    <style>
+        @import url('https://rsms.me/inter/inter.css');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #111111;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 20px 40px;
+        }
+        h1, h2 {
+            color: #f5f5f5;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        h1 {
+            font-size: 2em;
+            text-align: center;
+            background: linear-gradient(45deg, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border: none;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        pre {
+            background-color: #1c1c1c;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            color: #d1d1d1;
+        }
+        .instructions {
+            background-color: #1c1c1c;
+            border-left: 4px solid #8b5cf6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .instructions ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+        .copy-btn {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CollegeCrush: Storage & Policies SQL</h1>
+        <div class="instructions">
+            <p><strong>How to set up your storage:</strong></p>
+            <ol>
+                <li>First, ensure you have run the main database setup script (`database_setup.html`).</li>
+                <li>Go to your Supabase project's <strong>SQL Editor</strong>.</li>
+                <li>Copy and run the "Storage Bucket" script first.</li>
+                <li>Then, copy and run the "Storage Policies" script. These are safe to re-run.</li>
+            </ol>
+        </div>
+
+        <section id="storage">
+            <h2>
+                <span>1. Storage Bucket</span>
+                <button class="copy-btn" data-target="sql-storage">Copy</button>
+            </h2>
+            <p>This script creates the public storage bucket for user profile pictures.</p>
+            <pre><code id="sql-storage">
+-- Creates a public bucket "profile-pics" with a 5MB file size limit for specific image types.
+-- `ON CONFLICT DO NOTHING` makes this script safe to run multiple times.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('profile-pics', 'profile-pics', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp'])
+ON CONFLICT (id) DO NOTHING;
+            </code></pre>
+        </section>
+
+        <section id="policies">
+            <h2>
+                <span>2. Storage Policies</span>
+                <button class="copy-btn" data-target="sql-policies">Copy</button>
+            </h2>
+            <p>This script sets up security policies for the storage bucket, allowing users to manage their own profile pictures securely.</p>
+            <pre><code id="sql-policies">
+-- Drop existing policies to ensure a clean setup
+DROP POLICY IF EXISTS "Allow public read access to profile pics" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated users to upload profile pics" ON storage.objects;
+DROP POLICY IF EXISTS "Allow users to update their own profile pic" ON storage.objects;
+DROP POLICY IF EXISTS "Allow users to delete their own profile pic" ON storage.objects;
+
+-- POLICY 1: Allow public, anonymous access to read all files in the 'profile-pics' bucket.
+-- This is necessary so that any user can see any other user's profile pictures in the app.
+CREATE POLICY "Allow public read access to profile pics"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'profile-pics');
+
+-- POLICY 2: Allow an authenticated user to UPLOAD files into their own folder.
+-- The `(storage.foldername(name))[1]` extracts the first folder name from the file path (e.g., 'user-id-123' from 'user-id-123/avatar.png').
+-- This policy checks if that folder name matches the currently logged-in user's ID.
+-- This ensures users can only upload files to their own designated folder.
+CREATE POLICY "Allow authenticated users to upload profile pics"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+    bucket_id = 'profile-pics' AND
+    auth.uid() = (storage.foldername(name))[1]::uuid
+);
+
+-- POLICY 3: Allow a user to UPDATE files in their own folder.
+-- This uses the same logic as the upload policy to ensure users can only modify their own files.
+CREATE POLICY "Allow users to update their own profile pic"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+    bucket_id = 'profile-pics' AND
+    auth.uid() = (storage.foldername(name))[1]::uuid
+);
+
+-- POLICY 4: Allow a user to DELETE files from their own folder.
+-- This uses the same logic as the upload policy to ensure users can only delete their own files.
+CREATE POLICY "Allow users to delete their own profile pic"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+    bucket_id = 'profile-pics' AND
+    auth.uid() = (storage.foldername(name))[1]::uuid
+);
+            </code></pre>
+        </section>
+    </div>
+    <script>
+        document.querySelectorAll('.copy-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.dataset.target;
+                const codeElement = document.getElementById(targetId);
+                const code = codeElement.innerText;
+                
+                navigator.clipboard.writeText(code).then(() => {
+                    button.innerText = 'Copied!';
+                    setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    alert('Failed to copy text.');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
