@@ -12,6 +12,10 @@ import { PREMIUM_GRADIENT } from '../../../constants/constants.ts';
 import { supabase } from '../../../services/supabase.ts';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Fix for framer-motion type errors
+const MotionDiv: any = motion.div;
+const MotionButton: any = motion.button;
+
 interface ConversationItemProps {
     conversation: Conversation;
     isOnline: boolean;
@@ -24,12 +28,12 @@ const ConversationItem: React.FC<ConversationItemProps> = React.memo(({ conversa
     const isPremium = conversation.otherUser.membership === MembershipType.Premium;
 
     return (
-        <motion.button
+        <MotionButton
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            onClick={onClick} 
+            onClick={onClick}
             className="w-full text-left flex items-center gap-4 p-4 hover:bg-zinc-800/50 rounded-xl transition-colors duration-200"
         >
             <div className="relative flex-shrink-0">
@@ -54,7 +58,7 @@ const ConversationItem: React.FC<ConversationItemProps> = React.memo(({ conversa
                     </div>
                 )}
             </div>
-        </motion.button>
+        </MotionButton>
     );
 });
 

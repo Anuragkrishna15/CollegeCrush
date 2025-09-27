@@ -70,16 +70,25 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onProfileCreated })
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setProfilePicFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-          setProfilePicPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+   if (e.target.files && e.target.files[0]) {
+     const file = e.target.files[0];
+     if (file.size > 5 * 1024 * 1024) { // 5MB limit
+       setError("Profile picture must be less than 5MB.");
+       return;
+     }
+     if (!file.type.startsWith('image/')) {
+       setError("Please select a valid image file.");
+       return;
+     }
+     setProfilePicFile(file);
+     setError(null);
+     const reader = new FileReader();
+     reader.onloadend = () => {
+         setProfilePicPreview(reader.result as string);
+     };
+     reader.readAsDataURL(file);
+   }
+ };
   
   const validateStep1 = () => {
     if (!profilePicFile) { setError("Please upload a profile picture."); return false; }
@@ -90,8 +99,8 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onProfileCreated })
   }
   
   const validateStep2 = () => {
-      const filledPrompts = prompts.filter(p => p && p.answer.trim());
-      if(filledPrompts.length < 3) { setError("Please complete all 3 prompts."); return false; }
+      const allFilled = prompts.every(p => p && p.answer.trim());
+      if(!allFilled) { setError("Please complete all 3 prompts."); return false; }
       setError(null);
       return true;
   }
@@ -148,7 +157,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onProfileCreated })
             <div className="flex gap-4">
                 <div className="flex-1">
                     <label htmlFor="dob" className="block text-sm font-medium text-zinc-400">Date of Birth</label>
-                    <input id="dob" name="dob" type="date" required value={formData.dob} onChange={handleInputChange}
+                    <input id="dob" name="dob" type="date" required value={formData.dob} onChange={handleInputChange} max={new Date().toISOString().split('T')[0]}
                     className="mt-1 block w-full p-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" />
                 </div>
                 <div className="flex-1">

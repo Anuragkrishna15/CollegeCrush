@@ -251,14 +251,12 @@ DECLARE
     v_proposer_id uuid := auth.uid();
     v_proposer_lat numeric;
     v_proposer_lon numeric;
-    v_proposer_gender public.gender_enum;
     v_proposer_name text;
-    v_target_gender public.gender_enum;
     nearby_user RECORD;
 BEGIN
     -- Get proposer's details
-    SELECT latitude, longitude, gender, name
-    INTO v_proposer_lat, v_proposer_lon, v_proposer_gender, v_proposer_name
+    SELECT latitude, longitude, name
+    INTO v_proposer_lat, v_proposer_lon, v_proposer_name
     FROM public.profiles
     WHERE id = v_proposer_id;
 
@@ -272,16 +270,12 @@ BEGIN
     VALUES (v_proposer_id, p_cafe, p_date_time, p_meal, 'pending', to_char(p_date_time, 'YYYY-MM-DD HH24:MI:SS'))
     RETURNING id INTO v_new_date_id;
 
-    -- Determine target gender for notifications
-    v_target_gender := CASE WHEN v_proposer_gender = 'Male' THEN 'Female'::public.gender_enum ELSE 'Male'::public.gender_enum END;
-
     -- Find nearby users and create notifications
     FOR nearby_user IN
         SELECT p.id
         FROM public.profiles p
         WHERE
             p.id != v_proposer_id
-            AND p.gender = v_target_gender
             AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
             -- Check for blocks
             AND NOT EXISTS (
@@ -328,12 +322,9 @@ AS $$
 DECLARE
     v_user_lat numeric;
     v_user_lon numeric;
-    v_user_gender public.gender_enum;
-    v_target_gender public.gender_enum;
 BEGIN
-    SELECT latitude, longitude, gender INTO v_user_lat, v_user_lon, v_user_gender FROM public.profiles WHERE id = p_user_id;
+    SELECT latitude, longitude INTO v_user_lat, v_user_lon FROM public.profiles WHERE id = p_user_id;
     IF v_user_lat IS NULL OR v_user_lon IS NULL THEN RETURN; END IF;
-    v_target_gender := CASE WHEN v_user_gender = 'Male' THEN 'Female'::public.gender_enum ELSE 'Male'::public.gender_enum END;
 
     RETURN QUERY
     SELECT
@@ -355,7 +346,6 @@ BEGIN
     WHERE bd.requested_user_id IS NULL
       AND bd.requesting_user_id != p_user_id
       AND bd.date_time > now()
-      AND proposer.gender = v_target_gender
       AND proposer.latitude IS NOT NULL AND proposer.longitude IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM public.reports_blocks rb WHERE (rb.reporting_user_id = p_user_id AND rb.reported_user_id = proposer.id) OR (rb.reporting_user_id = proposer.id AND rb.reported_user_id = p_user_id))
       AND extensions.ST_DWithin(

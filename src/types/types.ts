@@ -1,4 +1,4 @@
-import { Database } from './services/database.types.ts';
+import { Database } from '../services/database.types.ts';
 
 export enum Screen {
   Swipe = 'Swipe',
@@ -14,9 +14,9 @@ export enum Screen {
 }
 
 export enum MembershipType {
-  Free = 'Free',
-  Trial = 'Trial',
-  Premium = 'Premium',
+   Free = 'Free',
+   Trial = 'Trial',
+   Premium = 'Premium',
 }
 
 export type DbProfile = Database['public']['Tables']['profiles']['Row'];

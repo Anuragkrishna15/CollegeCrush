@@ -35,7 +35,7 @@ export const PresenceProvider = ({ children }: { children: React.ReactNode }): R
 
         const updateOnlineUsers = () => {
             const presenceState = channel.presenceState();
-            const userIds = Object.keys(presenceState).map(key => presenceState[key][0].user_id as string);
+            const userIds = Object.keys(presenceState).map(key => (presenceState[key][0] as any).user_id as string);
             setOnlineUsers(new Set(userIds));
         };
         

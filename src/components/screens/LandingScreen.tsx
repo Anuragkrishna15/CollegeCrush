@@ -116,7 +116,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
         <AuroraBackground />
         <div className="relative z-10">
           <h1
-            className="text-5xl md:text-7xl font-extrabold"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold"
           >
             <AnimatedTitle text="Beyond the Swipe." />
             <br />
@@ -126,7 +126,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
           </h1>
           <MotionP
             variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 1 }}
-            className="mt-6 max-w-2xl mx-auto text-lg text-neutral-300"
+            className="mt-6 max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-neutral-300"
           >
             The exclusive network for Indian college students to meet, date, and discover real-world experiences together.
           </MotionP>
@@ -212,7 +212,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
                             {React.cloneElement(step.icon, { size: 32 })}
                         </div>
                         <h3 className="text-xl font-bold">{step.title}</h3>
-                        <p className="text-neutral-400 mt-2">{step.description}</p>
+                        <p className="text-neutral-400 mt-2 break-words">{step.description}</p>
                     </MotionDiv>
                 ))}
                 </MotionDiv>
@@ -240,7 +240,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
               >
                 {feature.icon}
                 <h3 className="text-xl font-bold mt-4">{feature.title}</h3>
-                <p className="text-neutral-400 mt-2">{feature.description}</p>
+                <p className="text-neutral-400 mt-2 break-words">{feature.description}</p>
               </MotionDiv>
             ))}
           </MotionDiv>
@@ -263,7 +263,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
                            <div className="flex gap-1 text-yellow-400 mb-2">
                                 <StarIcon fill="currentColor" size={16}/><StarIcon fill="currentColor" size={16}/><StarIcon fill="currentColor" size={16}/><StarIcon fill="currentColor" size={16}/><StarIcon fill="currentColor" size={16}/>
                            </div>
-                           <p className="text-neutral-300 italic">"{t.quote}"</p>
+                           <p className="text-neutral-300 italic break-words">"{t.quote}"</p>
                            <div className="flex items-center mt-4">
                                 <img src={t.image} alt={t.name} loading="lazy" decoding="async" className="w-12 h-12 rounded-full object-cover" />
                                 <div className="ml-4">
@@ -292,7 +292,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
                     <MotionDiv key={member.name} variants={itemVariants} className="flex flex-col items-center">
                         <img src={member.image} alt={member.name} loading="lazy" decoding="async" className="w-24 h-24 rounded-full object-cover" />
                         <h3 className="text-lg font-bold mt-4">{member.name}</h3>
-                        <p className="text-neutral-400 text-sm">{member.role}</p>
+                        <p className="text-neutral-400 text-sm break-words">{member.role}</p>
                     </MotionDiv>
                 ))}
             </MotionDiv>
@@ -303,7 +303,7 @@ function LandingScreen({ onGetStarted }: LandingScreenProps) {
       <section id="contact" className="py-20 px-4">
         <div className="container mx-auto max-w-2xl text-center">
             <h2 className="text-4xl font-bold">Have Questions?</h2>
-            <p className="text-neutral-400 mt-4">We'd love to hear from you. Drop us a line and we'll get back to you as soon as we can.</p>
+            <p className="text-neutral-400 mt-4 break-words">We'd love to hear from you. Drop us a line and we'll get back to you as soon as we can.</p>
             <MotionForm 
                 onSubmit={handleContactSubmit}
                 variants={itemVariants}

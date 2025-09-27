@@ -95,12 +95,20 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onProfileUpdate }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setNewPicFile(file);
-      setNewPicPreview(URL.createObjectURL(file));
-    }
-  };
+   if (e.target.files && e.target.files[0]) {
+     const file = e.target.files[0];
+     if (file.size > 5 * 1024 * 1024) { // 5MB limit
+       showNotification("Profile picture must be less than 5MB.", "error");
+       return;
+     }
+     if (!file.type.startsWith('image/')) {
+       showNotification("Please select a valid image file.", "error");
+       return;
+     }
+     setNewPicFile(file);
+     setNewPicPreview(URL.createObjectURL(file));
+   }
+ };
   
   const handleRemovePicture = (indexToRemove: number) => {
       if (pictures.length <= 1) {
@@ -243,7 +251,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onProfileUpdate }
           <div className="flex gap-4">
             <div className="flex-1">
                 <label htmlFor="dob" className="block text-sm font-medium text-zinc-400">Date of Birth</label>
-                <input id="dob" name="dob" type="date" required value={formData.dob} onChange={handleInputChange}
+                <input id="dob" name="dob" type="date" required value={formData.dob} onChange={handleInputChange} max={new Date().toISOString().split('T')[0]}
                 className="mt-1 block w-full p-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" />
             </div>
             <div className="flex-1">

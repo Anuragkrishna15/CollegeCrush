@@ -254,7 +254,7 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
         // On error
         (error) => {
             console.error('Realtime subscription error:', error);
-            showNotification('Connection issue. Messages may be delayed.', 'warning');
+            showNotification('Connection issue. Messages may be delayed.', 'info');
         }
     );
     
@@ -303,9 +303,9 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
     } catch(err: any) {
         if (err.tempId) {
             // Message is queued for retry, show a different status
-            setMessages(prevMessages => 
-                prevMessages.map(msg => 
-                    msg.id === tempId 
+            setMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    msg.id === tempId
                         ? { ...msg, status: 'queued' as any }
                         : msg
                 )
@@ -315,7 +315,7 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
             // Complete failure, revert
             setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
             setNewMessage(textToSend); // Restore text to input
-            showNotification("Failed to send message", "error");
+            showNotification(err.message || "Failed to send message", "error");
         }
     } finally {
         setIsSending(false);

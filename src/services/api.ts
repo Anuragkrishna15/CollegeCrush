@@ -329,7 +329,7 @@ export const getConversationDetails = async (conversationId: string, currentUser
         id: otherUserData.id,
         name: otherUserData.name,
         profilePics: otherUserData.profilePics,
-        membership: otherUserData.membership,
+        membership: otherUserData.membership as MembershipType,
         college: otherUserData.college,
         course: otherUserData.course,
         tags: otherUserData.tags,
@@ -361,7 +361,14 @@ export const getMessages = async (conversationId: string, page: number = 0): Pro
         throw error;
     }
 
-    return (data || []).reverse();
+    return ((data || []) as any[]).map(msg => ({
+        id: msg.id,
+        text: msg.text,
+        senderId: msg.sender_id,
+        created_at: msg.created_at,
+        conversation_id: msg.conversation_id,
+        is_read: msg.is_read,
+    })).reverse();
 };
 
 export const sendMessage = async (conversationId: string, text: string, senderId: string): Promise<Message> => {
@@ -371,7 +378,14 @@ export const sendMessage = async (conversationId: string, text: string, senderId
         .select()
         .single();
     if (error) throw error;
-    return data;
+    return {
+        id: (data as any).id,
+        text: (data as any).text,
+        senderId: (data as any).sender_id,
+        created_at: (data as any).created_at,
+        conversation_id: (data as any).conversation_id,
+        is_read: (data as any).is_read,
+    };
 };
 
 export const markMessagesAsRead = async (conversationId: string, readerId: string): Promise<void> => {

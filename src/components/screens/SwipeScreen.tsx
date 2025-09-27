@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { fetchProfiles, recordSwipe, fetchAds } from '../../services/api.ts';
 import { Profile, MembershipType, Screen, Ad, Swipeable } from '../../types/types.ts';
 import ProfileCard from '../ProfileCard.tsx';
@@ -16,7 +16,7 @@ import ProfileCardSkeleton from '../skeletons/ProfileCardSkeleton.tsx';
 const MotionButton: any = motion.button;
 const MotionDiv: any = motion.div;
 
-const SWIPE_LIMIT = 5;
+const SWIPE_LIMIT = 20;
 const AD_FREQUENCY = 5; // Show an ad every 5 profiles
 
 interface SwipeButtonProps {
@@ -79,6 +79,7 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
     const { user } = useUser();
     const { showNotification } = useNotification();
     const [swipeDirection, setSwipeDirection] = React.useState<'left' | 'right' | null>(null);
+    const [isSwiping, setIsSwiping] = React.useState(false);
 
     // For drag gestures
     const x = useMotionValue(0);
@@ -131,15 +132,17 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
     const advanceProfile = React.useCallback(() => {
         setCurrentIndex(prevIndex => prevIndex + 1);
         setSwipeDirection(null);
+        setIsSwiping(false);
         x.set(0); // Reset motion value for the next card
     }, [x]);
 
     const handleSwipe = React.useCallback(async (direction: 'left' | 'right') => {
-        if (!user || currentIndex >= swipeDeck.length) return;
+        if (!user || currentIndex >= swipeDeck.length || isSwiping) return;
 
         const swipedItem = swipeDeck[currentIndex];
         setSwipeDirection(direction);
-        
+        setIsSwiping(true);
+
         // Type guard to check if it's a profile
         if (!('link' in swipedItem)) {
             const swipedUser = swipedItem as Profile;
@@ -147,10 +150,9 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
             if (user.membership === MembershipType.Free && swipesToday >= SWIPE_LIMIT) {
                 showNotification("Daily swipe limit reached. Upgrade for more!", 'error');
                 setSwipeDirection(null);
+                setIsSwiping(false);
                 return;
             }
-            
-            setTimeout(advanceProfile, 300); // Wait for animation
 
             try {
                 const result = await recordSwipe(user.id, swipedUser.id, direction);
@@ -170,11 +172,9 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
             } catch (error) {
                 showNotification("Something went wrong, please try again.", "error");
             }
-        } else {
-            // It's an ad, just advance
-            setTimeout(advanceProfile, 300);
         }
-    }, [user, currentIndex, swipeDeck, swipesToday, showNotification, advanceProfile]);
+        // For both profiles and ads, advance is handled by AnimatePresence onExitComplete
+    }, [user, currentIndex, swipeDeck, swipesToday, showNotification]);
 
     const currentItem = !loading && !error && swipeDeck.length > 0 && currentIndex < swipeDeck.length ? swipeDeck[currentIndex] : null;
     const isCurrentItemAd = currentItem && 'link' in currentItem;
@@ -222,27 +222,33 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
                        
                        {/* Top card */}
                        {currentItem && (
-                         <MotionDiv
-                            key={currentItem.id}
-                            className="absolute w-full h-full"
-                            style={{ zIndex: 1, x, rotate }}
-                            variants={cardVariants}
-                            initial="initial"
-                            animate={swipeDirection ? "exit" : "animate"}
-                            custom={swipeDirection}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            drag={'link' in currentItem ? false : "x"}
-                            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                            dragElastic={0.5}
-                            onDragEnd={(_, { offset, velocity }) => {
-                                const swipePower = Math.abs(offset.x) * velocity.x;
-                                if (swipePower < -5000) {
-                                    handleSwipe('left');
-                                } else if (swipePower > 5000) {
-                                    handleSwipe('right');
-                                }
-                            }}
-                         >
+                         <AnimatePresence>
+                           <MotionDiv
+                              key={currentItem.id}
+                              className="absolute w-full h-full"
+                              style={{ zIndex: 1, x, rotate }}
+                              variants={cardVariants}
+                              initial="initial"
+                              animate={swipeDirection ? "exit" : "animate"}
+                              custom={swipeDirection}
+                              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                              drag={'link' in currentItem ? false : (isSwiping ? false : "x")}
+                              dragConstraints={false}
+                              dragElastic={0.5}
+                              dragMomentum={false}
+                              onAnimationComplete={(definition) => {
+                                  if (definition === "exit") advanceProfile();
+                              }}
+                              onDragEnd={(_, { offset, velocity }) => {
+                                  if (isSwiping) return;
+                                  const swipePower = Math.abs(offset.x) * velocity.x;
+                                  if (swipePower < -2000) {
+                                      handleSwipe('left');
+                                  } else if (swipePower > 2000) {
+                                      handleSwipe('right');
+                                  }
+                              }}
+                           >
                              <div className="relative w-full h-full">
                                {'link' in currentItem ? (
                                  <AdCard ad={currentItem} />
@@ -255,7 +261,8 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
                                 </>
                                )}
                              </div>
-                         </MotionDiv>
+                           </MotionDiv>
+                         </AnimatePresence>
                        )}
 
                        {/* Empty state shown after last card animates out */}
@@ -295,10 +302,10 @@ function SwipeScreen({ onProfileClick, onGoToChat, setActiveScreen }: SwipeScree
 
                 {currentItem && !isCurrentItemAd && (
                     <div className="flex items-center justify-center space-x-6 md:space-x-8 w-full">
-                        <SwipeButton onClick={() => handleSwipe('left')} ariaLabel="Swipe left (reject)" className="text-red-500" disabled={!!swipeDirection}>
+                        <SwipeButton onClick={() => handleSwipe('left')} ariaLabel="Swipe left (reject)" className="text-red-500" disabled={!!swipeDirection || isSwiping}>
                             <X size={40} strokeWidth={3} />
                         </SwipeButton>
-                        <SwipeButton onClick={() => handleSwipe('right')} ariaLabel="Swipe right (like)" className="text-pink-500" disabled={!!swipeDirection}>
+                        <SwipeButton onClick={() => handleSwipe('right')} ariaLabel="Swipe right (like)" className="text-pink-500" disabled={!!swipeDirection || isSwiping}>
                             <Heart size={48} fill="currentColor" />
                         </SwipeButton>
                     </div>

@@ -119,14 +119,16 @@ const AuthScreen: React.FC = () => {
                             <p className="text-sm text-zinc-500 text-left mb-6">We sent a verification code to {email}.</p>
                              <label htmlFor="otp-input" className="sr-only">Verification Code</label>
                              <input
-                                id="otp-input"
-                                type="text"
-                                placeholder="123456"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                className="w-full p-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 tracking-widest text-center"
-                                required
-                            />
+                               id="otp-input"
+                               type="text"
+                               inputMode="numeric"
+                               pattern="[0-9]*"
+                               placeholder="123456"
+                               value={otp}
+                               onChange={(e) => setOtp(e.target.value)}
+                               className="w-full p-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 tracking-widest text-center"
+                               required
+                           />
                             <MotionButton
                                 whileTap={{ scale: 0.95 }}
                                 type="submit"

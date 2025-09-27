@@ -62,11 +62,10 @@ export class MessagingService {
 
         const { data, error } = await supabase
             .from('messages')
-            .insert({ 
-                conversation_id: conversationId, 
-                text, 
-                sender_id: senderId,
-                created_at: new Date().toISOString()
+            .insert({
+                conversation_id: conversationId,
+                text,
+                sender_id: senderId
             })
             .select()
             .single();
