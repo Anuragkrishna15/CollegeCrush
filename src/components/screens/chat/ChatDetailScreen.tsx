@@ -123,7 +123,7 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
         const fullConvo = await getConversationDetails(conversation.id, user.id);
         if (fullConvo) {
             setMessages(fullConvo.messages);
-            setShowRizzButton(fullConvo.messages.length >= 4 && fullConvo.messages.length <= 10 && !hasCheckedRizz.current);
+            setShowRizzButton(fullConvo.messages.length >= 4 && !hasCheckedRizz.current);
             setHasMore(fullConvo.messages.length > 0);
             setCurrentPage(1);
             // Mark messages as read after loading them
@@ -481,25 +481,31 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
       {/* Input */}
       <div className="flex-shrink-0 p-4 border-t border-zinc-800 bg-zinc-950/70 backdrop-blur-lg">
         <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-            {!newMessage.trim() && <IcebreakerGenerator otherUser={conversation.otherUser} onSelect={handleSelectIcebreaker} />}
-            <textarea
-                ref={textareaRef} 
-                value={newMessage}
-                onChange={e => {
-                    setNewMessage(e.target.value);
-                    handleTyping();
-                }}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e);
-                    }
-                }}
-                placeholder="Type a message..."
-                rows={1}
-                className="flex-1 w-full p-3 bg-zinc-800 border border-zinc-700 rounded-2xl focus:outline-none focus:ring-1 focus:ring-pink-500 resize-none max-h-32"
-            />
-            <MotionButton 
+            <div className="flex-1 relative">
+                {!newMessage.trim() && (
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                        <IcebreakerGenerator otherUser={conversation.otherUser} onSelect={handleSelectIcebreaker} />
+                    </div>
+                )}
+                <textarea
+                    ref={textareaRef}
+                    value={newMessage}
+                    onChange={e => {
+                        setNewMessage(e.target.value);
+                        handleTyping();
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage(e);
+                        }
+                    }}
+                    placeholder="Type a message..."
+                    rows={1}
+                    className={`w-full p-3 bg-zinc-800 border border-zinc-700 rounded-2xl focus:outline-none focus:ring-1 focus:ring-pink-500 resize-none max-h-32 ${!newMessage.trim() ? 'pl-12' : ''}`}
+                />
+            </div>
+            <MotionButton
               aria-label="Send message"
               whileTap={{ scale: 0.9 }}
               type="submit" disabled={isSending || !newMessage.trim()} className={`p-3 rounded-full text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r ${PREMIUM_GRADIENT}`}>
