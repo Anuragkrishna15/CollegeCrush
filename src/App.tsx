@@ -135,6 +135,12 @@ const App: React.FC = () => {
                 setUnreadCount(prev => prev + 1);
             }
         })
+        .on('system', { event: 'error' }, (error) => {
+            // Only treat as error if it's actually an error, not a success message
+            if (error?.status !== 'ok') {
+                console.error('Notification subscription error:', error);
+            }
+        })
         .subscribe();
       
       return () => {

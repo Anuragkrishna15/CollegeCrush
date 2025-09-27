@@ -220,9 +220,12 @@ export class RealtimeSubscriptionManager {
                     }
                 )
                 .on('system', { event: 'error' }, (error) => {
-                    console.error('Realtime subscription error:', error);
-                    if (onError) onError(error);
-                    this.handleReconnect(conversationId, onNewMessage, onMessageUpdate, onError);
+                    // Only treat as error if it's actually an error, not a success message
+                    if (error?.status !== 'ok') {
+                        console.error('Realtime subscription error:', error);
+                        if (onError) onError(error);
+                        this.handleReconnect(conversationId, onNewMessage, onMessageUpdate, onError);
+                    }
                 })
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
