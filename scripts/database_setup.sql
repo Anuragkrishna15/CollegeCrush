@@ -606,7 +606,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
 CREATE OR REPLACE FUNCTION public.create_new_match_notification()
@@ -618,7 +618,7 @@ BEGIN
     INSERT INTO public.notifications(user_id, type, message, source_entity_id) VALUES (NEW.user1_id, 'new_match', 'You matched with ' || user2_name || '!', NEW.id);
     INSERT INTO public.notifications(user_id, type, message, source_entity_id) VALUES (NEW.user2_id, 'new_match', 'You matched with ' || user1_name || '!', NEW.id);
     RETURN NEW;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION public.create_new_message_notification()
 RETURNS TRIGGER AS $$
@@ -628,7 +628,7 @@ BEGIN
     SELECT name INTO sender_name FROM public.profiles WHERE id = NEW.sender_id;
     INSERT INTO public.notifications(user_id, type, message, source_entity_id) VALUES(recipient_id, 'new_message', 'New message from ' || sender_name, NEW.conversation_id);
     RETURN NEW;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION public.create_blind_date_notification()
 RETURNS TRIGGER AS $$
@@ -639,7 +639,7 @@ BEGIN
         SELECT name INTO requested_user_name FROM public.profiles WHERE id = NEW.requested_user_id;
         INSERT INTO public.notifications(user_id, type, message, source_entity_id) VALUES(NEW.requesting_user_id, 'blind_date_accepted', 'Your blind date with ' || requested_user_name || ' was accepted!', NEW.id);
     END IF; RETURN NEW;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- This function cleans up a user's data after their auth.users entry is deleted.
 CREATE OR REPLACE FUNCTION public.handle_delete_user()
