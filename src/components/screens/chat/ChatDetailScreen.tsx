@@ -101,8 +101,9 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
   // FIX: Infer RealtimeChannel type from the supabase client to avoid import issues.
   const channelRef = React.useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastBroadcastTime = React.useRef(0);
-  
+
   const hasCheckedRizz = React.useRef(false);
+  const lastConnectionErrorTime = React.useRef(0);
 
   const isOtherUserOnline = onlineUsers.has(conversation.otherUser.id);
   const isPremium = conversation.otherUser.membership === MembershipType.Premium;
@@ -254,7 +255,11 @@ function ChatDetailScreen({ conversation, onBack, onProfileClick }: ChatDetailSc
         // On error
         (error) => {
             console.error('Realtime subscription error:', error);
-            showNotification('Connection issue. Messages may be delayed.', 'info');
+            const now = Date.now();
+            if (now - lastConnectionErrorTime.current > 30000) { // 30 seconds cooldown
+                showNotification('Connection issue. Messages may be delayed.', 'info');
+                lastConnectionErrorTime.current = now;
+            }
         }
     );
     

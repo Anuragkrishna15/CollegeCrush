@@ -452,7 +452,7 @@ export const proposeBlindDate = async (cafe: string, dateTime: string, meal: Bli
     });
     if (error) {
         console.error("Error proposing blind date:", error);
-        throw new Error("Could not propose the date. Please try again.");
+        throw new Error(error.message || "Could not propose the date. Please try again.");
     }
     return data;
 };

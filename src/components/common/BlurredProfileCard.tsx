@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Profile } from '../../types/types.ts';
+import { Profile, BasicProfile } from '../../types/types.ts';
 import { getOptimizedUrl } from '../../utils/date.ts';
 
 interface BlurredProfileCardProps {
-    profile: Profile;
+    profile: Profile | BasicProfile;
 }
 
 const BlurredProfileCard: React.FC<BlurredProfileCardProps> = ({ profile }) => {
